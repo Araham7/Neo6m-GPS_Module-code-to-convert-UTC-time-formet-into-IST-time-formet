@@ -1,0 +1,105 @@
+const int timezone_hours = 5; // Isme humlogon ne 5 likha ha kyunki hamara IST(Time zone) , UTC ke comparision me 5 hour aage hai .
+const int timezone_minutes = 30; // Isme humlogon ne 30 likha hai kunki hamara IST(Time zone) , UTC ke comparision me 30 min aage hai .
+//---------------------------------------------------------------------------
+#include <SoftwareSerial.h>
+#define rxPin 4
+#define txPin 3 
+SoftwareSerial neogps(rxPin,txPin);
+
+#include <TinyGPS++.h>
+TinyGPSPlus gps;
+
+//-------------------------- Program variables ---------------------------
+
+//double lat;
+//double lng;
+//int day, month, year;
+String hours, minutes;
+int second;
+
+void setup(void) {
+  Serial.begin(9600);
+  neogps.begin(9600);
+}
+
+void loop(void){
+  Read_GPS();
+}
+
+void Read_GPS(){
+  //------------------------------------------------------------------
+  boolean newData = false;
+  for (unsigned long start = millis(); millis() - start < 1000;)
+  {
+    while (neogps.available())
+    {
+      if (gps.encode(neogps.read()))
+      {
+        newData = true;
+        break;
+      }
+    }
+  }
+  //------------------------------------------------------------------
+  //If newData is true
+  if(newData == true){
+    newData = false;
+    Get_GPS();
+  }
+  else { 
+    //no data
+  }
+}
+
+
+void Get_GPS(){
+  if (gps.time.isValid()){
+    int hour = gps.time.hour();
+    int minute = gps.time.minute();
+    second = gps.time.second();
+
+    abc(hour, minute);
+    
+    hours   = String(hour);
+    minutes = String(minute);
+    hours = (hours.length() == 1) ? "0"+hours : hours;
+    minutes = (minutes.length() == 1) ? "0"+minutes : minutes;
+  }
+}
+
+void abc(int &hour, int &minute){
+  
+//  ----------------------------------------------------------------
+//  This will print time in UTC formet :---
+//    Serial.println("UTC =  "+String(hour)+":"+String(minute)+":"+String(second));
+//------------------------------------------------------------------
+
+    minute = minute + timezone_minutes;
+    if(minute >= 60){
+      minute = minute - 60;
+      hour = hour + 1;
+    }
+    if(minute < 0){
+      minute = minute + 60;
+      hour = hour - 1;
+    }
+    hour = hour + timezone_hours;
+    if(hour >= 24){
+      hour = hour - 24;
+    }
+    else if(hour < 0){
+      hour = hour + 24;
+    }
+    if(hour >12){
+      hour = hour - 12;
+    }
+
+//-----------------------------------------------------------
+//    This will print time in IST formet :--- 
+String time = String(hour)+":"+String(minute)+":"+String(second) ;
+    Serial.println("Time= " + time);
+//    if(time == "6:26:0" ){
+//      Serial.println("OK");
+//    }
+}
+//------------------------------------------------------------
